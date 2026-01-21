@@ -10,6 +10,7 @@ defmodule Identicon do
     input
     |> hash_input()
     |> pick_color()
+    |> build_grid()
   end
 
   @doc """
@@ -31,5 +32,30 @@ defmodule Identicon do
   """
   def pick_color(%Identicon.Image{hex: [r, g, b | _rest]} = image) do
     %Identicon.Image{image | color: {r, g, b}}
+  end
+
+  @doc """
+  Builds the grid for the identicon by chunking the hex list into rows, mirroring each row,
+  flattening the list of rows, and pairing each element with its index
+  """
+  def build_grid(%Identicon.Image{hex: hex_list} = image) do
+    grid =
+      hex_list
+      |> Enum.chunk_every(3, 3, :discard)
+      |> Enum.map(&mirror_row/1)
+      |> List.flatten()
+      |> Enum.with_index()
+
+    %Identicon.Image{image | grid: grid}
+  end
+
+  @doc """
+  Mirrors a row by appending the first two elements in reverse order to the end of the row.
+  For example, given the row `[1, 2, 3]`, it returns `[1, 2, 3, 2, 1]`.
+  Rows will always have at least 3 elements due to the chunk_every call
+  """
+  def mirror_row(row) do
+    [first, second | _rest] = row
+    row ++ [second, first]
   end
 end
